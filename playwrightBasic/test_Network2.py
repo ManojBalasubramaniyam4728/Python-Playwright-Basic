@@ -1,6 +1,11 @@
 import time
+from pydoc import pager
 
-from playwright.sync_api import Page
+from playwright.sync_api import Page, Playwright, expect
+from pytest_playwright.pytest_playwright import playwright, browser
+
+from playwrightBasic.utils.apiBase import APIUtils
+
 
 #To change the URL before sending it to the server.
 def interceptRequest(route):
@@ -19,3 +24,17 @@ def test_Network_2(page: Page):
     #it is not showing correct html page so commenting the below line
     #message =page.locator(".blink_me").text_content()
     #print(message)
+
+
+def test_session_storage(playwright : Playwright):
+    apiUtils = APIUtils()
+    getToken =apiUtils.getToken(playwright)
+    browser = playwright.chromium.launch(headless=False)
+    context = browser.new_context()
+    page = context.new_page()
+    #scripting to inject token in session local storage
+    page.add_init_script(f"""localStorage.setItem('token','{getToken}')""")
+    page.goto("https://rahulshettyacademy.com/client")
+    page.get_by_role("button", name="ORDERS").click()
+    expect(page.get_by_text("Your Orders")).to_be_visible()
+
